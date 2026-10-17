@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Scan tracked files for secrets
+        run: pnpm scan:secrets
+
+      - name: Review dependency advisories
+        run: pnpm audit:deps
+
+      - name: Check production licenses
+        run: pnpm check:licenses
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: API end-to-end tests
+        run: pnpm test:e2e
+
+      - name: Coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage
+          if-no-files-found: ignore
+
+      - name: Architecture boundaries
+        run: pnpm check:architecture
+
+      - name: Build
+        run: pnpm build
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: softtech
+          POSTGRES_PASSWORD: softtech
+          POSTGRES_DB: softtech_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U softtech -d softtech_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      INTEGRATION_DATABASE_URL: postgresql://softtech:softtech@127.0.0.1:5432/softtech_test
+      INTEGRATION_REDIS_URL: redis://127.0.0.1:6379/15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Integration tests
+        run: pnpm test:integration
+
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build API image
+        run: docker build -f docker/api/Dockerfile -t softtech-api:ci .
+
+      - name: Build web image
+        run: docker build -f docker/web/Dockerfile -t softtech-web:ci .

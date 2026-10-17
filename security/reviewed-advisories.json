@@ -1,0 +1,10 @@
+{
+  "advisories": [
+    {
+      "github_advisory_id": "GHSA-vfj7-8cjw-p6xm",
+      "module": "braces",
+      "pathIncludes": "@next/eslint-plugin-next",
+      "reason": "No patched braces release exists (patched_versions <0.0.0). After tsc-alias was removed, the remaining path is tooling/eslint -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces. That package is a development lint plugin. It is not imported by the API or web runtime. Do not override braces. Re-review this entry if the advisory appears outside the Next.js ESLint plugin or if a patched braces release is published. Production acceptance of this development-only advisory is still required while the audit reports it."
+    }
+  ]
+}

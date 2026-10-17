@@ -1,0 +1,10 @@
+packages:
+  - 'apps/*'
+  - 'tooling/*'
+
+catalog:
+  typescript: 6.0.3
+  eslint: 10.13.0
+  vitest: 5.0.5
+  zod: 4.6.7
+  '@types/node': 22.20.5

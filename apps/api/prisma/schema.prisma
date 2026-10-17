@@ -1,0 +1,98 @@
+// Platform persistence for Softtech Core.
+// Business models are added later by the modules that own them.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+  auditEvents AuditEvent[]
+  objects     StoredObject[]
+
+  @@map("organizations")
+}
+
+model UserAccount {
+  id          String       @id
+  subject     String       @unique
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+
+  @@map("user_accounts")
+}
+
+model Membership {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @db.Uuid
+  userId         String
+  role           String
+  status         String
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           UserAccount  @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([userId, status])
+  @@map("memberships")
+}
+
+model AuditEvent {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @db.Uuid
+  actorId        String?
+  action         String
+  resourceType   String
+  resourceId     String
+  requestId      String?
+  metadata       Json
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@map("audit_events")
+}
+
+model RevokedCredential {
+  jti       String   @id
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("revoked_credentials")
+}
+
+model OutboxMessage {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String   @db.Uuid
+  type            String
+  idempotencyKey  String   @unique
+  payload         Json
+  traceId         String?
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@map("outbox_messages")
+}
+
+model StoredObject {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @db.Uuid
+  objectKey      String
+  fileName       String
+  contentType    String
+  sizeBytes      Int
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, objectKey])
+  @@map("stored_objects")
+}
+ 

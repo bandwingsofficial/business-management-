@@ -1,0 +1,53 @@
+{
+  "name": "softtech-core",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "pnpm -r --if-present lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:unit": "pnpm -r --if-present test:unit",
+    "env:setup": "node scripts/setup-env.mjs",
+    "env:setup:integration": "node scripts/setup-env.mjs --integration",
+    "env:check": "node scripts/env-check.mjs",
+    "env:check:checkpoint": "node scripts/env-check.mjs --checkpoint",
+    "verify:foundation": "node scripts/verify-foundation.mjs",
+    "verify:infrastructure": "node scripts/verify-infrastructure.mjs",
+    "db:verify-postgres": "node scripts/with-integration-database.mjs node ../../scripts/probe-postgres.mjs",
+    "db:migrate:status": "node scripts/with-integration-database.mjs pnpm exec prisma migrate status",
+    "db:migrate:deploy": "node scripts/with-integration-database.mjs pnpm exec prisma migrate deploy",
+    "test:integration": "node scripts/run-integration.mjs",
+    "test:e2e": "pnpm --filter @softtech/api test:e2e",
+    "test:coverage": "pnpm --filter @softtech/api test:coverage",
+    "audit:deps": "node scripts/audit-dependencies.mjs",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "build": "pnpm -r --if-present build",
+    "build:api": "pnpm --filter @softtech/api build",
+    "build:web": "pnpm --filter @softtech/web build",
+    "check:architecture": "pnpm --filter @softtech/api check:architecture",
+    "generate:module": "pnpm --filter @softtech/scripts generate:module",
+    "prisma:generate": "pnpm --filter @softtech/api prisma:generate",
+    "dev:api": "pnpm --filter @softtech/api dev",
+    "dev:web": "pnpm --filter @softtech/web dev"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10",
+    "typescript": "6.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "unrs-resolver"
+    ]
+  }
+}

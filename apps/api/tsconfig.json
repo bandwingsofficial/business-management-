@@ -1,0 +1,12 @@
+{
+  "extends": "@softtech/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "prisma.config.ts"],
+  "exclude": ["node_modules", "dist", ".generator-tmp"]
+}
